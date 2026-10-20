@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ledger-config
+  namespace: ledger
+data:
+  DB_URL: jdbc:postgresql://postgres:5432/ledger
+  DB_USER: ledger
+  # Points at the temporary Kafka until milestone 3.
+  KAFKA_BOOTSTRAP_SERVERS: kafka:9092

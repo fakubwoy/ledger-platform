@@ -1,0 +1,36 @@
+# TEMPORARY: single-node KRaft Kafka, no volume. The app's statement consumer fails startup if the
+# `kafka` hostname does not resolve, so milestone 1 needs something behind that name.
+# Milestone 3 replaces it with Strimzi and persistent storage.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  namespace: ledger
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: kafka}
+  template:
+    metadata:
+      labels: {app: kafka}
+    spec:
+      # A Service called "kafka" would inject KAFKA_PORT=tcp://... env vars, which this image
+      # would read as broker config. Turn the legacy service env vars off.
+      enableServiceLinks: false
+      containers:
+        - name: kafka
+          image: apache/kafka:3.9.0
+          ports:
+            - containerPort: 9092
+          env:
+            - {name: KAFKA_ADVERTISED_LISTENERS, value: "PLAINTEXT://kafka:9092"}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  namespace: ledger
+spec:
+  selector: {app: kafka}
+  ports:
+    - port: 9092
