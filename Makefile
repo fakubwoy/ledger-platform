@@ -14,3 +14,7 @@ deploy:
 
 down:
 	kind delete cluster --name ledger
+
+# kind nodes cannot pull from registries on this network, so pull on the host and side-load.
+load-images:
+	for i in postgres:16 apache/kafka:3.9.0; do docker pull $$i && kind load docker-image $$i --name ledger; done
