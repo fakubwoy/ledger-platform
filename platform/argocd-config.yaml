@@ -1,0 +1,31 @@
+# Laptop-only overrides on top of the vendored argocd-install.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cm
+  namespace: argocd
+  labels: {app.kubernetes.io/part-of: argocd}
+data:
+  # Poll git every 60s instead of 180s, so a tag bump shows up quickly. A webhook would make it instant.
+  timeout.reconciliation: 60s
+  # Read-only UI without logging in, so headless Chrome can take screenshots. Never on a shared cluster.
+  users.anonymous.enabled: "true"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-rbac-cm
+  namespace: argocd
+  labels: {app.kubernetes.io/part-of: argocd}
+data:
+  policy.default: role:readonly
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: argocd-cmd-params-cm
+  namespace: argocd
+  labels: {app.kubernetes.io/part-of: argocd}
+data:
+  # Serve plain HTTP; it is only reached through kubectl port-forward.
+  server.insecure: "true"

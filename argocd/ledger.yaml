@@ -1,0 +1,23 @@
+# Argo CD keeps the ledger namespace equal to charts/ledger + values-dev.yaml on main.
+# No resources-finalizer on purpose: deleting this Application leaves the database and Kafka running.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ledger
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/fakubwoy/ledger-platform.git
+    targetRevision: main
+    path: charts/ledger
+    helm:
+      releaseName: ledger
+      valueFiles: [values-dev.yaml]
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ledger
+  syncPolicy:
+    automated:
+      prune: true      # a resource removed from git is removed from the cluster
+      selfHeal: true   # a manual kubectl change is reverted to what git says
