@@ -24,6 +24,11 @@ prometheus:
       limits: {memory: 1200Mi}
 grafana:
   adminPassword: admin
+  grafana.ini:
+    # Laptop only: lets headless Chrome take screenshots without a login flow. Never do this on a shared cluster.
+    auth.anonymous:
+      enabled: true
+      org_role: Admin
   defaultDashboardsTimezone: browser
   sidecar:
     dashboards:

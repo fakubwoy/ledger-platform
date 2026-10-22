@@ -1,13 +1,17 @@
 import http from 'k6/http';
-import { check } from 'k6';
+import { check, sleep } from 'k6';
 
 const BASE = __ENV.BASE_URL || 'http://localhost:8080';
 const H = { 'Content-Type': 'application/json' };
 
-// PROFILE=rollout: steady load long enough to cover a whole rolling update.
-const stages = __ENV.PROFILE === 'rollout'
-  ? [{ duration: '20s', target: 40 }, { duration: '3m30s', target: 40 }, { duration: '10s', target: 0 }]
-  : [{ duration: '1m', target: 60 }, { duration: '3m', target: 60 }, { duration: '30s', target: 0 }];
+// PROFILE=rollout|fault picks a steady profile; the default is the milestone 5 autoscaling ramp.
+const PROFILES = {
+  rollout: [{ duration: '20s', target: 40 }, { duration: '3m30s', target: 40 }, { duration: '10s', target: 0 }],
+  // Gentle, long load for fault drills: enough traffic for burn-rate math, little enough to leave the laptop alone.
+  fault: [{ duration: '10s', target: 10 }, { duration: __ENV.FAULT_DURATION || '12m', target: 10 }, { duration: '10s', target: 0 }],
+};
+const stages = PROFILES[__ENV.PROFILE] ||
+  [{ duration: '1m', target: 60 }, { duration: '3m', target: 60 }, { duration: '30s', target: 0 }];
 
 export const options = {
   stages: stages,
@@ -34,4 +38,5 @@ export default function (ids) {
   const r = http.post(`${BASE}/transfers`, JSON.stringify({ fromAccountId: a, toAccountId: b, amount: 1 }),
     { headers: { ...H, 'Idempotency-Key': `${__VU}-${__ITER}-${Date.now()}` } });
   check(r, { 'transfer ok': (x) => x.status === 200 || x.status === 201 });
+  if (__ENV.PROFILE === 'fault') sleep(0.5);
 }
