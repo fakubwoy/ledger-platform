@@ -1,0 +1,38 @@
+# Strimzi operator runs this as a KRaft broker+controller with a PVC (no ZooKeeper).
+# Bootstrap Service is kafka-kafka-bootstrap:9092.
+apiVersion: kafka.strimzi.io/v1
+kind: KafkaNodePool
+metadata:
+  name: dual
+  namespace: ledger
+  labels:
+    strimzi.io/cluster: kafka
+spec:
+  replicas: 1
+  roles: [controller, broker]
+  storage:
+    type: jbod
+    volumes:
+      - id: 0
+        type: persistent-claim
+        size: 2Gi
+        deleteClaim: false
+---
+apiVersion: kafka.strimzi.io/v1
+kind: Kafka
+metadata:
+  name: kafka
+  namespace: ledger
+spec:
+  kafka:
+    version: 4.3.1
+    listeners:
+      - {name: plain, port: 9092, type: internal, tls: false}
+    config:
+      offsets.topic.replication.factor: 1
+      transaction.state.log.replication.factor: 1
+      transaction.state.log.min.isr: 1
+      default.replication.factor: 1
+      min.insync.replicas: 1
+  entityOperator:
+    topicOperator: {}

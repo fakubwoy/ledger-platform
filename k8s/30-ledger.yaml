@@ -20,7 +20,10 @@ spec:
             - containerPort: 8080
           envFrom:
             - configMapRef: {name: ledger-config}
-            - secretRef: {name: ledger-db}
+          env:
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef: {name: ledger-db, key: password}
           # Heap is 75% of the memory limit (JAVA_TOOL_OPTIONS in the image), so 768Mi gives ~576Mi heap.
           # Requests drive scheduling and HPA; the memory limit is a hard OOM-kill line. No CPU limit is a
           # deliberate choice here: CPU limits throttle the JVM, and HPA only needs the request.

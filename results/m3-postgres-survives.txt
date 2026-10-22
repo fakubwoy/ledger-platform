@@ -1,0 +1,5 @@
+before: alice=750 bob=250
+pod:    9145c3d9-f88e-4d2f-9098-183679bedd31  pvc: pvc-92f57c31-70c0-41be-8dfa-00fe8ed56d73
+--- deleting the Postgres pod
+pod:    4ae82d88-7be4-458d-83bc-c7a56f98930f  pvc: pvc-92f57c31-70c0-41be-8dfa-00fe8ed56d73
+after:  alice=750 bob=250

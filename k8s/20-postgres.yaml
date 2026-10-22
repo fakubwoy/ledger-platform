@@ -1,0 +1,18 @@
+# CloudNativePG operator turns this Cluster into Pods + PVCs + Services (ledger-db-rw / -ro).
+# One instance for now: a single primary is the honest baseline (see milestone 10 for what that means).
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: ledger-db
+  namespace: ledger
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  storage:
+    size: 1Gi
+  bootstrap:
+    initdb:
+      database: ledger
+      owner: ledger
+      secret:
+        name: ledger-db
