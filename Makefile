@@ -18,6 +18,8 @@ up: cluster load-images image platform operators observability deploy
 
 cluster:
 	kind create cluster --config kind/cluster.yaml
+	kind/helpers/fix-dns.sh $(CLUSTER)
+	kubectl -n kube-system rollout restart deploy/coredns
 
 load-images:
 	for i in $(IMAGES) $(OBS_IMAGES); do docker pull -q $$i && kind load docker-image $$i --name $(CLUSTER); done

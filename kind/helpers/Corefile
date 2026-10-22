@@ -1,0 +1,11 @@
+# Laptop workaround. On this network containers cannot use plain DNS (port 53 to any public resolver is
+# blocked, and the WSL resolver is only reachable from the host), but outbound TLS works. This resolver
+# sits on the kind network and forwards over DNS-over-TLS; the kind nodes use it as their nameserver,
+# so containerd can pull images and in-cluster CoreDNS (which forwards to the node) resolves the internet.
+.:53 {
+    forward . tls://1.1.1.1 tls://1.0.0.1 {
+        tls_servername cloudflare-dns.com
+    }
+    cache 300
+    errors
+}
