@@ -21,6 +21,27 @@ spec:
           envFrom:
             - configMapRef: {name: ledger-config}
             - secretRef: {name: ledger-db}
+          # Heap is 75% of the memory limit (JAVA_TOOL_OPTIONS in the image), so 768Mi gives ~576Mi heap.
+          # Requests drive scheduling and HPA; the memory limit is a hard OOM-kill line. No CPU limit is a
+          # deliberate choice here: CPU limits throttle the JVM, and HPA only needs the request.
+          resources:
+            requests: {cpu: 250m, memory: 512Mi}
+            limits: {memory: 768Mi}
+          # Startup: gives the JVM + Flyway up to 30 x 5s = 150s. Liveness/readiness are paused until it passes.
+          startupProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8080}
+            periodSeconds: 5
+            failureThreshold: 30
+          # Liveness: "is the process wedged?" Failure restarts the container. Must not depend on Postgres or Kafka.
+          livenessProbe:
+            httpGet: {path: /actuator/health/liveness, port: 8080}
+            periodSeconds: 10
+            failureThreshold: 3
+          # Readiness: "should I get traffic?" Failure removes the Pod from Service endpoints, no restart.
+          readinessProbe:
+            httpGet: {path: /actuator/health/readiness, port: 8080}
+            periodSeconds: 5
+            failureThreshold: 3
 ---
 apiVersion: v1
 kind: Service

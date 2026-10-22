@@ -1,0 +1,29 @@
+## A: liveness points at a path that 404s
+NAME                      READY   STATUS    RESTARTS      AGE
+ledger-7d69fb667b-2zsqn   1/1     Running   1 (39s ago)   79s
+ledger-7d69fb667b-ndg27   0/1     Running   2 (9s ago)    90s
+9s          Warning   Unhealthy   pod/ledger-7d69fb667b-2zsqn   Liveness probe failed: HTTP probe failed with statuscode: 404
+5s          Warning   Unhealthy   pod/ledger-7d69fb667b-ndg27   Startup probe failed: Get "http://10.244.2.7:8080/actuator/health/liveness": dial tcp 10.244.2.7:8080: connect: connection refused
+11s         Normal   Killing   pod/ledger-7d69fb667b-ndg27   Container ledger failed liveness probe, will be restarted
+
+## B: readiness points at a path that 404s
+NAME                      READY   STATUS    RESTARTS   AGE
+ledger-5c876dbd7f-fvcfp   0/1     Running   0          61s
+ledger-7b8454cf4b-4pdjg   1/1     Running   0          71s
+ledger-7b8454cf4b-svr7t   1/1     Running   0          87s
+Service endpoints:
+NAME     ENDPOINTS                         AGE
+ledger   10.244.1.8:8080,10.244.2.8:8080   38h
+error: timed out waiting for the condition
+
+## C: startup probe gives the JVM only 1 x 1s
+NAME                      READY   STATUS             RESTARTS      AGE
+ledger-7b8454cf4b-4pdjg   1/1     Running            0             2m32s
+ledger-7b8454cf4b-svr7t   1/1     Running            0             2m48s
+ledger-bb59d555b-slq67    0/1     CrashLoopBackOff   4 (14s ago)   75s
+22s         Warning   Unhealthy   pod/ledger-bb59d555b-slq67    Startup probe failed: Get "http://10.244.1.10:8080/actuator/health/liveness": dial tcp 10.244.1.10:8080: connect: connection refused
+
+## restored
+NAME                      READY   STATUS    RESTARTS   AGE
+ledger-7b8454cf4b-4pdjg   1/1     Running   0          2m34s
+ledger-7b8454cf4b-svr7t   1/1     Running   0          2m50s
