@@ -25,3 +25,6 @@ kafka:
 autoscaling:
   minReplicas: 3
   maxReplicas: 10
+
+pdb:
+  minAvailable: 2

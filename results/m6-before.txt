@@ -1,0 +1,3 @@
+default strategy (25% surge / 25% unavailable), no preStop, default 30s grace period, 40 VUs, rollout restart at +40s
+rollout took 73s
+requests=62253 failed=12 (0.01%) p95=531ms max=3530ms

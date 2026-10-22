@@ -1,0 +1,3 @@
+deployment "ledger" successfully rolled out
+rollout took 177s
+requests=46308 failed=0 p95=703ms max=2304ms
