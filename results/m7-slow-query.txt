@@ -1,0 +1,26 @@
+baseline p95 before the fault: 0.10018831556729502 s
+T0 09:49:26  fault injected (insert into entries now sleeps 400 ms)
+T1 09:50:58  alert firing: TransfersLatencySlowBurn  (+92s after injection)
+
+== 1. Dashboard (the PromQL behind each panel)
+   p95 latency POST /transfers (s)      2.132
+   5xx error ratio                      0.000
+   outbox backlog                       3.000
+   kafka consumer lag                   0.000
+   transfers/min                        369.333
+   -> only latency is off; errors, backlog and lag are fine, so the app is slow, not broken.
+
+== 2. Trace (slowest recent POST /transfers)
+   trace 1e1a46a4c841f06b6f85cc2ac4725cd, 32 spans. Slowest:
+      815.3 ms  POST /transfers                                    
+      804.6 ms  OutboxRepository.save                              
+      804.5 ms  Session.persist com.fakubwoy.ledger.outbox.OutboxM 
+      401.4 ms  INSERT ledger.entries                              insert into entries (account_id,amount,transaction_id,id) values (?,?,
+      400.8 ms  INSERT ledger.entries                              insert into entries (account_id,amount,transaction_id,id) values (?,?,
+   -> the time is spent inside Postgres: 'INSERT ledger.entries' took 401 ms.
+
+== 3. Logs for that trace (Loki)
+   8a5ef1536ad16ddb7546bf751a185eba Posted TRANSFER 1 USD from b0e5c2c6-96a9-4b9e-8926-c0acbab98c49 to 64ef24b9-8
+   -> same trace id in the log line; requestId from there lets you find the caller's request.
+
+T2 09:50:58  root cause identified (+92s after injection, +0s after the alert)
