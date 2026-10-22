@@ -21,3 +21,7 @@ kafka:
   storageSize: 20Gi
   replicationFactor: 3
   minIsr: 2
+
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 10

@@ -38,3 +38,14 @@ kafka:
   storageSize: 2Gi
   replicationFactor: 1
   minIsr: 1
+
+ingress:
+  enabled: true
+  className: nginx
+  host: ""        # empty matches any host, so http://localhost works
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 5
+  targetCPUUtilizationPercentage: 50   # of the CPU *request*, averaged over Pods

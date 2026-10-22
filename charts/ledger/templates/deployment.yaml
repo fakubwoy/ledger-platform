@@ -4,7 +4,10 @@ metadata:
   name: {{ .Release.Name }}
   labels: {{- include "ledger.labels" . | nindent 4 }}
 spec:
+  {{- /* With an HPA the HPA owns the count; setting it here would reset it on every helm upgrade. */}}
+  {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
+  {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: ledger
