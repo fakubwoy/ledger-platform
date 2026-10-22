@@ -1,1 +1,7 @@
 # kind laptop cluster: one of everything, no real password.
+
+image:
+  repository: ghcr.io/fakubwoy/ledger-service
+  # Written by ledger-service CI on every push to main; Argo CD rolls it out. Roll back with git revert.
+  tag: "pending-first-ci-build"
+  pullPolicy: IfNotPresent
