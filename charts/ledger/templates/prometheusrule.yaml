@@ -1,0 +1,62 @@
+{{- if .Values.monitoring.enabled }}
+{{- /*
+  SLO 1: 99.5% of POST /transfers do not fail with a 5xx   (error budget 0.5%)
+  SLO 2: 95% of POST /transfers finish under 300 ms        (error budget 5%)
+  Alerts fire on how fast the budget burns, using two windows so a short blip does not page
+  and a real outage does (the multi-window multi-burn-rate pattern from the Google SRE workbook).
+*/}}
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: {{ .Release.Name }}-slo
+  labels: {{- include "ledger.labels" . | nindent 4 }}
+spec:
+  groups:
+    - name: ledger-slo-recording
+      rules:
+        {{- range $w := list "5m" "30m" "1h" "6h" }}
+        - record: ledger:transfers_error_ratio:rate{{ $w }}
+          expr: |
+            sum(rate(http_server_requests_seconds_count{uri="/transfers",method="POST",status=~"5.."}[{{ $w }}]))
+            /
+            sum(rate(http_server_requests_seconds_count{uri="/transfers",method="POST"}[{{ $w }}]))
+        - record: ledger:transfers_slow_ratio:rate{{ $w }}
+          expr: |
+            1 - (
+              sum(rate(http_server_requests_seconds_bucket{uri="/transfers",method="POST",le="0.3"}[{{ $w }}]))
+              /
+              sum(rate(http_server_requests_seconds_count{uri="/transfers",method="POST"}[{{ $w }}]))
+            )
+        {{- end }}
+        - record: ledger:outbox_backlog:max
+          expr: max(ledger_outbox_backlog)
+    - name: ledger-slo-alerts
+      rules:
+        - alert: TransfersAvailabilityFastBurn
+          expr: ledger:transfers_error_ratio:rate5m > (14.4 * 0.005) and ledger:transfers_error_ratio:rate1h > (14.4 * 0.005)
+          labels: {severity: page, slo: transfers-availability}
+          annotations:
+            summary: Transfer error budget burning 14x too fast (the 30-day budget would be gone in about 2 days)
+        - alert: TransfersAvailabilitySlowBurn
+          expr: ledger:transfers_error_ratio:rate30m > (6 * 0.005) and ledger:transfers_error_ratio:rate6h > (6 * 0.005)
+          labels: {severity: ticket, slo: transfers-availability}
+          annotations:
+            summary: Transfer error budget burning 6x too fast
+        - alert: TransfersLatencyFastBurn
+          expr: ledger:transfers_slow_ratio:rate5m > (14.4 * 0.05) and ledger:transfers_slow_ratio:rate1h > (14.4 * 0.05)
+          labels: {severity: page, slo: transfers-latency}
+          annotations:
+            summary: Transfers slower than 300 ms are burning the latency budget 14x too fast
+        - alert: TransfersLatencySlowBurn
+          expr: ledger:transfers_slow_ratio:rate30m > (6 * 0.05) and ledger:transfers_slow_ratio:rate6h > (6 * 0.05)
+          labels: {severity: ticket, slo: transfers-latency}
+          annotations:
+            summary: Transfers slower than 300 ms are burning the latency budget 6x too fast
+        - alert: LedgerOutboxStuck
+          # Never drained to zero in 5 minutes AND grew over those 5 minutes: events are written but not published.
+          expr: min_over_time(ledger:outbox_backlog:max[5m]) > 0 and delta(ledger:outbox_backlog:max[5m]) > 0
+          for: 1m
+          labels: {severity: page}
+          annotations:
+            summary: Outbox backlog has been growing for 5 minutes, Kafka publishing looks stuck
+{{- end }}

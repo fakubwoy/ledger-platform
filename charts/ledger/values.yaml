@@ -10,7 +10,7 @@ service:
 
 resources:
   requests: {cpu: 250m, memory: 512Mi}
-  limits: {memory: 768Mi}
+  limits: {memory: 1Gi}   # the tracing agent adds ~100-150Mi on top of the heap
 
 probes:
   startup: {periodSeconds: 5, failureThreshold: 30}
@@ -61,3 +61,11 @@ rollout:
 pdb:
   enabled: true
   minAvailable: 1
+
+tracing:
+  enabled: true
+  endpoint: http://tempo.monitoring.svc:4317   # OTLP gRPC
+
+# ServiceMonitor, PrometheusRule and dashboard need the kube-prometheus-stack CRDs and sidecar.
+monitoring:
+  enabled: true

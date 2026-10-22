@@ -1,0 +1,57 @@
+alloy:
+  configMap:
+    content: |
+      // Tail container logs through the Kubernetes API (no hostPath mounts needed) and push them to Loki.
+      discovery.kubernetes "pods" {
+        role = "pod"
+        namespaces { names = ["ledger"] }
+      }
+      discovery.relabel "pods" {
+        targets = discovery.kubernetes.pods.targets
+        rule {
+          source_labels = ["__meta_kubernetes_namespace"]
+          target_label  = "namespace"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_name"]
+          target_label  = "pod"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_container_name"]
+          target_label  = "container"
+        }
+        rule {
+          source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+          target_label  = "app"
+        }
+      }
+      loki.source.kubernetes "pods" {
+        targets    = discovery.relabel.pods.output
+        forward_to = [loki.process.ledger.receiver]
+      }
+      // Only the ledger app writes JSON. Keep level as a label (low cardinality); request and trace ids stay
+      // in the line, searched with LogQL (| json | requestId="..."), because ids as labels would explode the index.
+      loki.process "ledger" {
+        stage.match {
+          selector = "{app=\"ledger\"}"
+          stage.json {
+            expressions = { level = "log.level" }
+          }
+          stage.labels {
+            values = { level = "" }
+          }
+        }
+        forward_to = [loki.write.default.receiver]
+      }
+      loki.write "default" {
+        endpoint {
+          url = "http://loki.monitoring.svc:3100/loki/api/v1/push"
+        }
+      }
+controller:
+  type: deployment
+  replicas: 1
+configReloader:
+  image:
+    # Chart default pins a digest, which cannot match a side-loaded image on these nodes.
+    tag: v0.94.0

@@ -37,6 +37,16 @@ spec:
             - name: DB_PASSWORD
               valueFrom:
                 secretKeyRef: {name: {{ include "ledger.dbSecret" . }}, key: password}
+            {{- if .Values.tracing.enabled }}
+            # Overrides the image's JAVA_TOOL_OPTIONS (same heap setting) and attaches the OpenTelemetry agent.
+            - name: JAVA_TOOL_OPTIONS
+              value: "-XX:MaxRAMPercentage=75 -javaagent:/app/opentelemetry-javaagent.jar"
+            - name: POD_NAME
+              valueFrom:
+                fieldRef: {fieldPath: metadata.name}
+            - name: OTEL_RESOURCE_ATTRIBUTES
+              value: "k8s.pod.name=$(POD_NAME)"
+            {{- end }}
           lifecycle:
             preStop:
               exec:

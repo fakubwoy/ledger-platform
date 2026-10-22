@@ -9,3 +9,12 @@ data:
   KAFKA_BOOTSTRAP_SERVERS: {{ .Release.Name }}-kafka-bootstrap:9092
   SERVER_SHUTDOWN: graceful
   SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: {{ .Values.rollout.shutdownTimeout }}
+{{- if .Values.tracing.enabled }}
+  OTEL_SERVICE_NAME: ledger-service
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.tracing.endpoint }}
+  OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+  OTEL_METRICS_EXPORTER: none
+  OTEL_LOGS_EXPORTER: none
+  # The outbox poller runs every 500 ms; its empty polls would otherwise bury the real traces.
+  OTEL_INSTRUMENTATION_SPRING_SCHEDULING_ENABLED: "false"
+{{- end }}

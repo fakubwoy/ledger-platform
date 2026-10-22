@@ -1,0 +1,58 @@
+# Laptop-sized: no Alertmanager (alerts are visible in Prometheus and Grafana), no control-plane scraping
+# (kind does not expose those components), no admission webhook (avoids an extra image and cert job).
+alertmanager:
+  enabled: false
+defaultRules:
+  create: false
+kubeApiServer: {enabled: false}
+kubeControllerManager: {enabled: false}
+kubeScheduler: {enabled: false}
+kubeProxy: {enabled: false}
+kubeEtcd: {enabled: false}
+prometheusOperator:
+  admissionWebhooks: {enabled: false}
+  tls: {enabled: false}
+prometheus:
+  prometheusSpec:
+    # Pick up ServiceMonitors/PrometheusRules from any namespace, not only ones labelled with this release.
+    serviceMonitorSelectorNilUsesHelmValues: false
+    podMonitorSelectorNilUsesHelmValues: false
+    ruleSelectorNilUsesHelmValues: false
+    retention: 2d
+    resources:
+      requests: {cpu: 200m, memory: 600Mi}
+      limits: {memory: 1200Mi}
+grafana:
+  adminPassword: admin
+  defaultDashboardsTimezone: browser
+  sidecar:
+    dashboards:
+      searchNamespace: ALL
+  additionalDataSources:
+    - name: Loki
+      uid: loki
+      type: loki
+      access: proxy
+      url: http://loki.monitoring.svc:3100
+      jsonData:
+        derivedFields:
+          # Turns the trace_id field in a JSON log line into a link to the trace in Tempo.
+          - name: TraceID
+            matcherRegex: '"trace_id":"(\w+)"'
+            url: '$${__value.raw}'
+            datasourceUid: tempo
+            urlDisplayLabel: Open trace
+    - name: Tempo
+      uid: tempo
+      type: tempo
+      access: proxy
+      url: http://tempo.monitoring.svc:3200
+      jsonData:
+        tracesToLogsV2:
+          datasourceUid: loki
+          customQuery: true
+          query: '{namespace="ledger"} |= "$${__trace.traceId}"'
+          spanStartTimeShift: "-5m"
+          spanEndTimeShift: "5m"
+        serviceMap:
+          datasourceUid: prometheus
