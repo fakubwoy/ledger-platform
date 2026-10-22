@@ -61,8 +61,7 @@ Under steady load (10 virtual users), a Postgres trigger was added that sleeps 4
 
 | Time | Event |
 |---|---|
-| 09:48:41 | load running, p95 latency 100 ms |
-| 09:49:26 | fault injected |
+| 09:49:26 | p95 latency 100 ms just before injection, then fault injected |
 | 09:50:58 | `TransfersLatencySlowBurn` firing (+92 s) |
 | 09:50:58 | root cause identified (+92 s, same minute as the alert) |
 
