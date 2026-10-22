@@ -1,0 +1,23 @@
+replicaCount: 3
+
+image:
+  repository: ghcr.io/fakubwoy/ledger-service
+  tag: "0.0.1"
+  pullPolicy: Always
+
+resources:
+  requests: {cpu: 500m, memory: 768Mi}
+  limits: {memory: 1Gi}
+
+db:
+  existingSecret: ledger-db
+
+postgres:
+  instances: 3
+  storageSize: 20Gi
+
+kafka:
+  replicas: 3
+  storageSize: 20Gi
+  replicationFactor: 3
+  minIsr: 2

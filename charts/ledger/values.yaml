@@ -1,0 +1,40 @@
+replicaCount: 2
+
+image:
+  repository: ledger-service
+  tag: dev
+  pullPolicy: IfNotPresent
+
+service:
+  port: 80
+
+resources:
+  requests: {cpu: 250m, memory: 512Mi}
+  limits: {memory: 768Mi}
+
+probes:
+  startup: {periodSeconds: 5, failureThreshold: 30}
+  liveness: {periodSeconds: 10, failureThreshold: 3}
+  readiness: {periodSeconds: 5, failureThreshold: 3}
+
+db:
+  # Empty: the chart creates a basic-auth Secret from `password`. Set it to use a Secret you manage
+  # (External Secrets, sealed-secrets, a cloud secret store); it needs `username` and `password` keys.
+  existingSecret: ""
+  username: ledger
+  password: ledger
+  name: ledger
+
+postgres:
+  enabled: true
+  instances: 1
+  storageSize: 1Gi
+  image: ghcr.io/cloudnative-pg/postgresql:17
+
+kafka:
+  enabled: true
+  version: 4.3.1
+  replicas: 1
+  storageSize: 2Gi
+  replicationFactor: 1
+  minIsr: 1
