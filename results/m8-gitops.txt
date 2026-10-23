@@ -1,0 +1,17 @@
+## Deploy: push to ledger-service, nothing else (2026-10-22)
+T+0s    12:12:44 pushed ledger-service 2b488e7 ("Expose build info at /actuator/info")
+T+185s  12:15:45 CI finished: success (tests, image build, push to GHCR)
+T+188s  12:15:48 ledger-platform main: bd292b7 Deploy ledger-service sha-2b488e7 to dev   (commit by CI)
+T+211s  12:16:11 Argo CD synced: Deployment image is sha-2b488e7
+T+312s  12:17:52 rollout complete
+first curl right after: /actuator/info -> 404, served by an old pod still in ingress endpoints during its preStop sleep
+retried seconds later:  /actuator/info -> {"build":{"time":"2026-10-22T12:14:53.796Z",...}}   (the new build)
+
+## Rollback: git revert of the tag bump (2026-10-23)
+T+0s    03:49:29 pushed 4496129 Revert "Deploy ledger-service sha-2b488e7 to dev"
+T+66s   03:50:31 Argo CD synced: Deployment image sha-06222aa
+T+131s  03:51:36 rollback complete, /actuator/info -> HTTP 404 (the older build has no info endpoint)
+
+## Self-heal: manual change in the cluster
+T+0s    03:52:10 manual drift: kubectl set image to sha-2b488e7
+T+4s    03:52:14 Argo CD self-heal: image back to sha-06222aa (what git says)
