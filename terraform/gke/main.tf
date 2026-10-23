@@ -160,4 +160,6 @@ resource "google_service_account_iam_member" "eso_workload_identity" {
   service_account_id = google_service_account.eso.name
   role               = "roles/iam.workloadIdentityUser"
   member             = "serviceAccount:${var.project}.svc.id.goog[external-secrets/external-secrets]"
+  # The identity pool <project>.svc.id.goog only exists once a cluster with Workload Identity does.
+  depends_on = [google_container_cluster.this]
 }

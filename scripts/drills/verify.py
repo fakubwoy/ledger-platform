@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """Checks the ledger after a drill. Money invariants come from Postgres; idempotency is checked by replaying
 every acknowledged key and comparing the answer. Exit 1 if any check fails."""
-import functools, json, subprocess, sys, time, urllib.error, urllib.request
+import functools, json, os, subprocess, sys, time, urllib.error, urllib.request
 from concurrent.futures import ThreadPoolExecutor
 
 print = functools.partial(print, flush=True)
 
 data = json.load(open(sys.argv[1]))
 s, results = data["summary"], data["results"]
-BASE = "http://localhost:8080"
+BASE = os.environ.get("BASE_URL", "http://localhost:8080")
+# How to run psql. Default: exec into the CloudNativePG pod. On a managed database (Cloud SQL), point it at a
+# client pod instead, e.g. VERIFY_PSQL="kubectl -n ledger exec psql-client -- psql postgresql://...".
+PSQL = os.environ.get("VERIFY_PSQL", "kubectl -n ledger exec ledger-db-1 -c postgres -- psql -d ledger").split()
 ok = True
 
 def sql(q):
-    out = subprocess.run(["kubectl", "-n", "ledger", "exec", "ledger-db-1", "-c", "postgres", "--", "psql", "-d", "ledger",
-                          "-At", "-c", q], capture_output=True, text=True, check=True).stdout.strip()
+    out = subprocess.run(PSQL + ["-At", "-c", q], capture_output=True, text=True, check=True).stdout.strip()
     return out
 
 def check(name, cond, detail):
