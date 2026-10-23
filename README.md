@@ -67,7 +67,8 @@ network ([kind/helpers/fix-dns.sh](kind/helpers/fix-dns.sh)). On a normal networ
 | GitOps | `git push` to running pods in 312 s, rollback by `git revert` in 131 s, manual drift reverted in 4 s | [docs/gitops.md](docs/gitops.md) |
 | Security | Non-root, read-only root filesystem, no capabilities, no API token, Postgres reachable only from the ledger, trivy gates in CI | [docs/security.md](docs/security.md) |
 | Failure drills | Six drills under load (JVM SIGKILL, shared outbox with forced redelivery, Kafka down 11 min, Postgres crash and 60 s outage, slow database). Over 177,000 transfers: ledger sums to zero, no negative balances, every retried request applied exactly once, every event in the statement view once | [docs/failure-drills.md](docs/failure-drills.md) |
-| Azure and GCP | Terraform for AKS and GKE with managed Postgres and Workload Identity, validated, not applied | [docs/cloud.md](docs/cloud.md) |
+| GCP (GKE) | Deployed for real with Terraform: GKE, Cloud SQL, Secret Manager via External Secrets and Workload Identity. A node power-cycle drill found that a dead node's open transactions froze the whole service; after the fix (idle-in-transaction timeout, lock timeout, right-sized pool) all 3,005 transfers passed every check. Destroyed afterwards | [docs/cloud.md](docs/cloud.md) |
+| Azure (AKS) | Same design in Terraform with Azure Database for PostgreSQL and Key Vault. Validated, not applied | [docs/cloud.md](docs/cloud.md) |
 
 ## Screenshots
 
@@ -96,4 +97,6 @@ The dashboard during the slow-query drill, and the trace that pointed at the cau
   instance prod values add replicas and failover, which were not tested here.
 - One region, one cluster. No multi-region failover.
 - Kafka in dev is one broker with replication factor 1. Prod values use 3 brokers, RF 3, min ISR 2, untested.
-- The cloud setups are validated designs, not deployments.
+- AKS is a validated design, not a deployment. GKE was deployed for one session and torn down.
+- Kafka needs three failure domains to survive losing one; on the 2-node GKE test a node holding 2 of 3 brokers
+  took the controller quorum down (transfers kept working through the outbox).

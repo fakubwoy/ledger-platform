@@ -6,6 +6,9 @@ metadata:
 data:
   DB_URL: {{ .Values.db.url | default (printf "jdbc:postgresql://%s-db-rw:5432/%s" .Release.Name .Values.db.name) }}
   DB_USER: {{ .Values.db.username }}
+  {{- with .Values.db.poolSize }}
+  SPRING_DATASOURCE_HIKARI_MAXIMUMPOOLSIZE: {{ . | quote }}
+  {{- end }}
   KAFKA_BOOTSTRAP_SERVERS: {{ .Release.Name }}-kafka-bootstrap:9092
   SERVER_SHUTDOWN: graceful
   SPRING_LIFECYCLE_TIMEOUT_PER_SHUTDOWN_PHASE: {{ .Values.rollout.shutdownTimeout }}

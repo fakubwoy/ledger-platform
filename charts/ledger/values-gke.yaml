@@ -4,13 +4,16 @@ replicaCount: 3
 
 image:
   repository: ghcr.io/fakubwoy/ledger-service
-  tag: "sha-9408cfa"
+  tag: "sha-6b6ec48"
   pullPolicy: IfNotPresent
 
 db:
   url: "<db_url from terraform output>"
   # Created by External Secrets from Secret Manager (platform/cloud/gke/external-secret.yaml).
   existingSecret: ledger-db
+  # db-f1-micro allows 25 connections and reserves 3, so 22 usable. Budget (maxReplicas + maxSurge) x poolSize:
+  # (4 + 1) x 4 = 20, which leaves room for psql. With 5 per pod a rolling update deadlocked (see docs/cloud.md).
+  poolSize: 4
 
 postgres:
   enabled: false   # managed Postgres instead of CloudNativePG
@@ -23,7 +26,7 @@ kafka:
 
 autoscaling:
   minReplicas: 3
-  maxReplicas: 10
+  maxReplicas: 4
 
 pdb:
   minAvailable: 2

@@ -1,0 +1,50 @@
+# FIRST RUN, CONNECTION POOL TOO LARGE. db-f1-micro allows 25 connections; 3+ pods x HikariCP default 10 exceeded
+# it, throughput collapsed before the fault and verify could not get a connection. Fixed with db.poolSize.
+08:37:30 drill gke-node-crash: driver on gke-ledger-gke-default-340d2ddf-5n6v; ledger pods per node:
+      1 gke-ledger-gke-default-340d2ddf-5n6v
+      2 gke-ledger-gke-default-340d2ddf-r7db
+08:37:30 kafka brokers per node:
+      1 gke-ledger-gke-default-340d2ddf-5n6v
+      2 gke-ledger-gke-default-340d2ddf-r7db
+08:38:19 FAULT: hard reset of node gke-ledger-gke-default-340d2ddf-r7db (like pulling the power cord: no drain, no SIGTERM)
+08:38:24   sample: node=True ledger ready=3 kafka brokers ready=true true true 
+08:38:39   sample: node=True ledger ready=3 kafka brokers ready=true true true 
+08:39:54   sample: node=True ledger ready=1 kafka brokers ready=false false false 
+08:40:07   sample: node=True ledger ready=1 kafka brokers ready=false false false 
+08:40:20   sample: node=True ledger ready=1 kafka brokers ready=false false false 
+08:40:36   sample: node=True ledger ready=1 kafka brokers ready=false false false 
+{"name": "gke-node-crash", "prefix": "drill-gke-node-crash-1792744646", "started": 1792744653.588768, "ended": 1792744833.9416666, "transfers": 2520, "final_status": {"201": 2520}, "retried_transfers": 28, "attempt_errors": {"0": 61}}
+08:40:56 client view (status per 10 s, 0 = no HTTP answer):
+  t=  0-  9s  201:478
+  t= 10- 19s  201:162
+  t= 20- 29s  201:49
+  t= 30- 39s  201:42
+  t= 40- 49s  201:34
+  t= 50- 59s  0:13  201:9
+  t= 60- 69s  0:23  201:12
+  t= 70- 79s  0:17  201:5
+  t= 80- 89s  0:8  201:32
+  t= 90- 99s  201:29
+  t=100-109s  201:176
+  t=110-119s  201:518
+  t=120-129s  201:66
+  t=130-139s  201:25
+  t=140-149s  201:28
+  t=150-159s  201:34
+  t=160-169s  201:269
+  t=170-179s  201:540
+  t=180-189s  201:12
+08:40:56 node gke-ledger-gke-default-340d2ddf-r7db Ready again
+08:41:02 verify:
+Money
+Traceback (most recent call last):
+  File "/home/fakubwoy/portfolio-projects/ledger-platform/scripts/drills/verify.py", line 27, in <module>
+    total = int(sql("select coalesce(sum(amount),0) from entries"))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fakubwoy/portfolio-projects/ledger-platform/scripts/drills/verify.py", line 18, in sql
+    out = subprocess.run(PSQL + ["-At", "-c", q], capture_output=True, text=True, check=True).stdout.strip()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['kubectl', '-n', 'ledger', 'exec', 'psql-client', '--', 'psql', 'postgresql://ledger@10.235.0.3/ledger?sslmode=require', '-At', '-c', 'select coalesce(sum(amount),0) from entries']' returned non-zero exit status 2.
+08:41:12 drill gke-node-crash verify exit=1

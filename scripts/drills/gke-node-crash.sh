@@ -11,11 +11,9 @@ log() { echo "$(date +%T) $*" | tee -a $OUT; }
 : > $OUT
 nodes_with() { $N get pods -l "$1" -o jsonpath='{range .items[*]}{.spec.nodeName}{"\n"}{end}' | sort | uniq -c; }
 
-# psql client for verify (Cloud SQL has no pod to exec into)
-$N run psql-client --image=postgres:17 --restart=Never --overrides='{"spec":{"containers":[{"name":"psql-client","image":"postgres:17","command":["sleep","7200"],"env":[{"name":"PGPASSWORD","valueFrom":{"secretKeyRef":{"name":"ledger-db","key":"password"}}}]}]}}' >/dev/null 2>&1
 $N create configmap drill-driver --from-file=scripts/drills/driver.py --dry-run=client -o yaml | kubectl apply -f - >/dev/null
 $N run drill-driver --image=python:3.12-slim --restart=Never --overrides='{"spec":{"containers":[{"name":"drill-driver","image":"python:3.12-slim","command":["sh","-c","python /d/driver.py --name gke-node-crash --base http://ledger.ledger.svc --duration 180 --out /tmp/out.json && sleep 3600"],"volumeMounts":[{"name":"d","mountPath":"/d"}]}],"volumes":[{"name":"d","configMap":{"name":"drill-driver"}}]}}' >/dev/null
-$N wait pod/psql-client pod/drill-driver --for=condition=Ready --timeout=300s >/dev/null
+$N wait pod/drill-driver --for=condition=Ready --timeout=300s >/dev/null
 DRIVER_NODE=$($N get pod drill-driver -o jsonpath='{.spec.nodeName}')
 log "drill gke-node-crash: driver on $DRIVER_NODE; ledger pods per node:"; nodes_with app.kubernetes.io/name=ledger | tee -a $OUT
 log "kafka brokers per node:"; nodes_with strimzi.io/kind=Kafka,strimzi.io/name=ledger-kafka | tee -a $OUT
@@ -41,9 +39,14 @@ for sec,st,n in json.load(open(sys.argv[1]))["summary"]["timeline"]: t[sec//10*1
 for s in sorted(t): print(f"  t={s:3d}-{s+9:3d}s  " + "  ".join(f"{k}:{v}" for k,v in sorted(t[s].items())))
 PY
 until [ "$(kubectl get node $VICTIM -o jsonpath='{.status.conditions[?(@.type=="Ready")].status}')" = True ]; do sleep 5; done; log "node $VICTIM Ready again"
-kubectl -n ledger port-forward svc/ledger 8080:80 >/dev/null 2>&1 & PF=$!; sleep 4
+# psql client for verify (Cloud SQL has no pod to exec into). Created after the fault: a bare pod on the
+# reset node would die with it and never come back.
+$N run psql-client --image=postgres:17 --restart=Never --overrides='{"spec":{"containers":[{"name":"psql-client","image":"postgres:17","command":["sleep","7200"],"env":[{"name":"PGPASSWORD","valueFrom":{"secretKeyRef":{"name":"ledger-db","key":"password"}}}]}]}}' >/dev/null 2>&1
+$N wait pod/psql-client --for=condition=Ready --timeout=300s >/dev/null
+# 18080, not 8080: the local kind cluster's ingress already owns localhost:8080.
+kubectl -n ledger port-forward svc/ledger 18080:80 >/dev/null 2>&1 & PF=$!; sleep 4
 log "verify:"
-VERIFY_PSQL="kubectl -n ledger exec psql-client -- psql postgresql://ledger@$DB_HOST/ledger?sslmode=require" \
+BASE_URL=http://localhost:18080 VERIFY_PSQL="kubectl -n ledger exec psql-client -- psql postgresql://ledger@$DB_HOST/ledger?sslmode=require" \
   python3 -u scripts/drills/verify.py /tmp/m10-gke-client.json 2>&1 | tee -a $OUT; RC=${PIPESTATUS[0]}
 kill $PF; $N delete pod drill-driver psql-client --wait=false >/dev/null 2>&1
 log "drill gke-node-crash verify exit=$RC"; exit $RC

@@ -4,13 +4,16 @@ replicaCount: 3
 
 image:
   repository: ghcr.io/fakubwoy/ledger-service
-  tag: "sha-9408cfa"
+  tag: "sha-6b6ec48"
   pullPolicy: IfNotPresent
 
 db:
   url: "<db_url from terraform output>"
   # Created by External Secrets from Key Vault (platform/cloud/aks/external-secret.yaml).
   existingSecret: ledger-db
+  # B_Standard_B1ms allows 50 connections and reserves 3, so 47 usable. Budget (maxReplicas + maxSurge) x poolSize:
+  # (8 + 1) x 5 = 45.
+  poolSize: 5
 
 postgres:
   enabled: false   # managed Postgres instead of CloudNativePG
@@ -23,7 +26,7 @@ kafka:
 
 autoscaling:
   minReplicas: 3
-  maxReplicas: 10
+  maxReplicas: 8
 
 pdb:
   minAvailable: 2

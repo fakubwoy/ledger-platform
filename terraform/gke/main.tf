@@ -109,6 +109,21 @@ resource "google_sql_database_instance" "this" {
   settings {
     edition = "ENTERPRISE"
     tier    = "db-f1-micro"
+    # A client that dies without closing its socket (node power loss) leaves its session "idle in transaction",
+    # holding row locks. Kill such sessions after 10 s, and probe idle clients every 10 s (3 misses = dead) instead
+    # of the ~12 minute default. Found by the GKE node-crash drill (docs/cloud.md).
+    database_flags {
+      name  = "idle_in_transaction_session_timeout"
+      value = "10000"
+    }
+    database_flags {
+      name  = "tcp_keepalives_interval"
+      value = "10"
+    }
+    database_flags {
+      name  = "tcp_keepalives_count"
+      value = "3"
+    }
     ip_configuration {
       ipv4_enabled    = false
       private_network = google_compute_network.this.id

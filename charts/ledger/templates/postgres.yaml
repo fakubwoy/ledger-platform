@@ -7,6 +7,10 @@ metadata:
 spec:
   instances: {{ .Values.postgres.instances }}
   imageName: {{ .Values.postgres.image }}
+  postgresql:
+    parameters:
+      # End sessions a crashed client left open in a transaction, so their row locks are released.
+      idle_in_transaction_session_timeout: "10s"
   storage:
     size: {{ .Values.postgres.storageSize }}
   bootstrap:

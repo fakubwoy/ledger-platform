@@ -115,6 +115,13 @@ resource "azurerm_postgresql_flexible_server" "this" {
   depends_on = [azurerm_private_dns_zone_virtual_network_link.db]
 }
 
+# Same as the Cloud SQL flags in terraform/gke: end sessions abandoned mid-transaction by a dead client.
+resource "azurerm_postgresql_flexible_server_configuration" "idle_in_transaction" {
+  name      = "idle_in_transaction_session_timeout"
+  server_id = azurerm_postgresql_flexible_server.this.id
+  value     = "10000"
+}
+
 resource "azurerm_postgresql_flexible_server_database" "ledger" {
   name      = "ledger"
   server_id = azurerm_postgresql_flexible_server.this.id

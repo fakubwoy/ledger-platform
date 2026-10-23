@@ -26,6 +26,10 @@ db:
   name: ledger
   # Empty: the in-cluster CloudNativePG cluster. Set it for a managed database (see values-aks/gke.yaml).
   url: ""
+  # Connections per pod. Empty: HikariCP's default of 10. (autoscaling.maxReplicas + rollout.maxSurge) x poolSize
+  # must fit the database's connection limit minus its reserved slots, or new pods cannot even run Flyway at
+  # startup and a rolling update deadlocks.
+  poolSize: ""
 
 postgres:
   enabled: true

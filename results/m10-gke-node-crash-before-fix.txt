@@ -1,0 +1,57 @@
+# BEFORE THE FIX. After the node reset, sessions from the dead pods stayed "idle in transaction" holding row
+# locks (no idle_in_transaction_session_timeout, ~12 min TCP keepalive), every healthy pod's pool filled with
+# requests blocked on those locks, and the service stopped answering. verify could not even connect (no free
+# connection slots). Fixed with Cloud SQL flags and lock_timeout; the passing run is m10-gke-node-crash.txt.
+08:56:13 drill gke-node-crash: driver on gke-ledger-gke-default-340d2ddf-5n6v; ledger pods per node:
+      2 gke-ledger-gke-default-340d2ddf-5n6v
+      2 gke-ledger-gke-default-340d2ddf-r7db
+08:56:14 kafka brokers per node:
+      1 gke-ledger-gke-default-340d2ddf-5n6v
+      2 gke-ledger-gke-default-340d2ddf-r7db
+08:57:03 FAULT: hard reset of node gke-ledger-gke-default-340d2ddf-r7db (like pulling the power cord: no drain, no SIGTERM)
+08:57:09   sample: node=True ledger ready=4 kafka brokers ready=true true true 
+08:57:24   sample: node=True ledger ready=3 kafka brokers ready=true true true 
+08:57:36   sample: node=True ledger ready=2 kafka brokers ready=true true true 
+08:57:49   sample: node=False ledger ready= kafka brokers ready=false true false 
+08:58:34   sample: node=True ledger ready= kafka brokers ready=false true false 
+08:58:46   sample: node=True ledger ready= kafka brokers ready=false true false 
+08:59:00   sample: node=True ledger ready= kafka brokers ready=false true false 
+08:59:14   sample: node=True ledger ready= kafka brokers ready=false true false 
+08:59:27   sample: node=True ledger ready= kafka brokers ready=false true false 
+08:59:41   sample: node=True ledger ready= kafka brokers ready=false true false 
+{"name": "gke-node-crash", "prefix": "drill-gke-node-crash-1792745775", "started": 1792745781.4284096, "ended": 1792745980.7165325, "transfers": 2362, "final_status": {"201": 2350, "None": 12}, "retried_transfers": 13, "attempt_errors": {"0": 482, "500": 1}}
+08:59:53 client view (status per 10 s, 0 = no HTTP answer):
+  t=  0-  9s  201:365
+  t= 10- 19s  201:471
+  t= 20- 29s  201:556
+  t= 30- 39s  201:601
+  t= 40- 49s  0:12  201:356
+  t= 50- 59s  0:12
+  t= 60- 69s  0:24  201:1
+  t= 70- 79s  0:11  500:1
+  t= 80- 89s  0:37
+  t= 90- 99s  0:38
+  t=100-109s  0:36
+  t=110-119s  0:39
+  t=120-129s  0:38
+  t=130-139s  0:36
+  t=140-149s  0:37
+  t=150-159s  0:38
+  t=160-169s  0:38
+  t=170-179s  0:39
+  t=180-189s  0:40
+  t=190-199s  0:7
+08:59:54 node gke-ledger-gke-default-340d2ddf-r7db Ready again
+08:59:58 verify:
+Money
+Traceback (most recent call last):
+  File "/home/fakubwoy/portfolio-projects/ledger-platform/scripts/drills/verify.py", line 27, in <module>
+    total = int(sql("select coalesce(sum(amount),0) from entries"))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/fakubwoy/portfolio-projects/ledger-platform/scripts/drills/verify.py", line 18, in sql
+    out = subprocess.run(PSQL + ["-At", "-c", q], capture_output=True, text=True, check=True).stdout.strip()
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['kubectl', '-n', 'ledger', 'exec', 'psql-client', '--', 'psql', 'postgresql://ledger@10.235.0.3/ledger?sslmode=require', '-At', '-c', 'select coalesce(sum(amount),0) from entries']' returned non-zero exit status 2.
+08:59:59 drill gke-node-crash verify exit=1
