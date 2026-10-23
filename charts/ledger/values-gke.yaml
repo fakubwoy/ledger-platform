@@ -1,0 +1,36 @@
+# GCP: GKE + Cloud SQL for PostgreSQL (terraform/gke). Kafka stays in-cluster via Strimzi.
+# Fill the two <...> values from `terraform output`.
+replicaCount: 3
+
+image:
+  repository: ghcr.io/fakubwoy/ledger-service
+  tag: "sha-9408cfa"
+  pullPolicy: IfNotPresent
+
+db:
+  url: "<db_url from terraform output>"
+  # Created by External Secrets from Secret Manager (platform/cloud/gke/external-secret.yaml).
+  existingSecret: ledger-db
+
+postgres:
+  enabled: false   # managed Postgres instead of CloudNativePG
+
+kafka:
+  replicas: 3
+  storageSize: 20Gi
+  replicationFactor: 3
+  minIsr: 2
+
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 10
+
+pdb:
+  minAvailable: 2
+
+# kube-prometheus-stack, Loki and Tempo are not installed there. Google Managed Prometheus scrapes with its own
+# PodMonitoring CRDs, and traces would go to Cloud Trace through an OpenTelemetry Collector.
+monitoring:
+  enabled: false
+tracing:
+  enabled: false

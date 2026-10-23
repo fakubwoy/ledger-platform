@@ -24,6 +24,8 @@ db:
   username: ledger
   password: ledger
   name: ledger
+  # Empty: the in-cluster CloudNativePG cluster. Set it for a managed database (see values-aks/gke.yaml).
+  url: ""
 
 postgres:
   enabled: true

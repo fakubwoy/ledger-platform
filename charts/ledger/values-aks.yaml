@@ -1,0 +1,36 @@
+# Azure: AKS + Azure Database for PostgreSQL (terraform/aks). Kafka stays in-cluster via Strimzi.
+# Fill the two <...> values from `terraform output`.
+replicaCount: 3
+
+image:
+  repository: ghcr.io/fakubwoy/ledger-service
+  tag: "sha-9408cfa"
+  pullPolicy: IfNotPresent
+
+db:
+  url: "<db_url from terraform output>"
+  # Created by External Secrets from Key Vault (platform/cloud/aks/external-secret.yaml).
+  existingSecret: ledger-db
+
+postgres:
+  enabled: false   # managed Postgres instead of CloudNativePG
+
+kafka:
+  replicas: 3
+  storageSize: 20Gi
+  replicationFactor: 3
+  minIsr: 2
+
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 10
+
+pdb:
+  minAvailable: 2
+
+# kube-prometheus-stack, Loki and Tempo are not installed there. Azure Managed Prometheus scrapes with its own
+# PodMonitor CRDs, and traces would go to Application Insights through an OpenTelemetry Collector.
+monitoring:
+  enabled: false
+tracing:
+  enabled: false
