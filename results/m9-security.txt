@@ -1,0 +1,25 @@
+## Non-root
+uid=10001(app) gid=10001 groups=10001
+
+## Read-only root filesystem
+write /app: touch: cannot touch '/app/x': Read-only file system
+write /tmp: ok (emptyDir)
+
+## No privilege escalation, no capabilities
+CapEff:	0000000000000000
+NoNewPrivs:	1
+
+## No Kubernetes API token mounted
+ls: cannot access '/var/run/secrets/kubernetes.io/serviceaccount': No such file or directory
+
+## ServiceAccount permissions (beyond the defaults every account gets)
+none
+can list secrets? no
+can list pods?    no
+
+## NetworkPolicy: who can reach Postgres (ledger-db-rw:5432)
+from the ledger pod:                OPEN
+from another pod in ledger ns:      BLOCKED
+from the monitoring namespace:      BLOCKED
+CNPG still manages the cluster:     Cluster in healthy state
+app still healthy:                  {"status":"UP","groups":["liveness","readiness"]}
