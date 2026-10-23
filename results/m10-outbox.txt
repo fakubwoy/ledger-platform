@@ -1,0 +1,33 @@
+05:06:26 drill outbox: 3 ledger pods ready, image sha-9408cfa
+{"name": "outbox", "prefix": "drill-outbox-1792731990", "started": 1792731991.0218036, "ended": 1792732051.220379, "transfers": 8506, "final_status": {"201": 8499, "422": 7}, "retried_transfers": 0, "attempt_errors": {}}
+05:07:45 3 replicas polling one outbox: 8519 transactions written, 8519 events in Kafka
+05:07:49   ledger-64bc75bbcd-2kfrj published 2174 events (outbox publish spans in Tempo)
+05:07:49   ledger-64bc75bbcd-fjzfd published 3686 events (outbox publish spans in Tempo)
+05:07:49   ledger-64bc75bbcd-n6nsc published 0 events (outbox publish spans in Tempo)
+05:07:50   ledger-64bc75bbcd-spnsk published 0 events (outbox publish spans in Tempo)
+05:07:50   ledger-64bc75bbcd-zp5d8 published 2620 events (outbox publish spans in Tempo)
+05:07:51 FAULT: marking the 50 newest published rows unpublished, so they are sent to Kafka a second time
+05:08:04 redelivery: 50 duplicate events in Kafka, statement_lines 425092 -> 425092
+05:08:04 client view (status per second, 0 = no HTTP answer):
+  t=  0-  9s  201:1774
+  t= 10- 19s  201:2368
+  t= 20- 29s  201:1923
+  t= 30- 39s  201:947
+  t= 40- 49s  201:904
+  t= 50- 59s  201:571  422:7
+  t= 60- 69s  201:12
+05:08:05 verify:
+Money
+  [PASS] all entries sum to zero: sum = 0
+  [PASS] every transaction is one debit + one credit: 0 unbalanced transactions
+  [PASS] no customer account below zero (no double spend): 0 negative accounts
+Exactly-once effect
+  [PASS] server stored one result per acknowledged transfer: 8499 stored, 8499 acknowledged
+  [PASS] one transaction per acknowledged transfer (no duplicates from retries): 8499 transactions, 8499 acknowledged
+  [PASS] no two keys produced the same transaction: 8499 distinct ids
+  [PASS] client got a final answer for every transfer: 0 without an answer
+  [PASS] replaying every acknowledged key returns the same transaction: 0 of 8499 differ
+Events (outbox -> Kafka -> statement view)
+  [PASS] outbox drained: 0 unpublished
+  [PASS] every transaction reached the statement view exactly once (2 lines): 0 incomplete
+05:12:54 drill outbox verify exit=0

@@ -1,0 +1,33 @@
+06:27:33 drill latency: 3 ledger pods ready, image sha-9408cfa
+06:28:05 FAULT: +150 ms on every packet into Postgres (tc netem on ledger-worker2/veth1a7a8f58); client timeout is 2 s
+06:29:08 RECOVER: delay removed
+{"name": "latency", "prefix": "drill-latency-1792736855", "started": 1792736855.7242312, "ended": 1792736975.8556807, "transfers": 12146, "final_status": {"201": 12139, "422": 7}, "retried_transfers": 147, "attempt_errors": {"0": 210}}
+06:29:36 client view (status per second, 0 = no HTTP answer):
+  t=  0-  9s  201:2396
+  t= 10- 19s  201:2206
+  t= 20- 29s  201:2389
+  t= 30- 39s  0:26  201:33
+  t= 40- 49s  0:37  201:32
+  t= 50- 59s  0:38  201:36
+  t= 60- 69s  0:29  201:28
+  t= 70- 79s  0:37  201:31
+  t= 80- 89s  0:31  201:40
+  t= 90- 99s  0:12  201:907
+  t=100-109s  201:2039
+  t=110-119s  201:1990  422:7
+  t=120-129s  201:12
+06:29:36 verify:
+Money
+  [PASS] all entries sum to zero: sum = 0
+  [PASS] every transaction is one debit + one credit: 0 unbalanced transactions
+  [PASS] no customer account below zero (no double spend): 0 negative accounts
+Exactly-once effect
+  [PASS] server stored one result per acknowledged transfer: 12139 stored, 12139 acknowledged
+  [PASS] one transaction per acknowledged transfer (no duplicates from retries): 12139 transactions, 12139 acknowledged
+  [PASS] no two keys produced the same transaction: 12139 distinct ids
+  [PASS] client got a final answer for every transfer: 0 without an answer
+  [PASS] replaying every acknowledged key returns the same transaction: 0 of 12139 differ
+Events (outbox -> Kafka -> statement view)
+  [PASS] outbox drained: 0 unpublished
+  [PASS] every transaction reached the statement view exactly once (2 lines): 0 incomplete
+06:30:10 drill latency verify exit=0

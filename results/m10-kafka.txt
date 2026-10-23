@@ -1,0 +1,110 @@
+05:13:13 drill kafka: 5 ledger pods ready, image sha-9408cfa
+05:13:14   sample: ready ledger pods=5 db=true outbox_backlog=32 alerts=-
+05:13:33   sample: ready ledger pods=5 db=true outbox_backlog=20 alerts=-
+05:13:44 FAULT: stopping the Kafka broker (operator scaled to 0 so it does not come back, then broker pod deleted)
+05:13:52   sample: ready ledger pods=5 db=true outbox_backlog=614 alerts=-
+05:14:10   sample: ready ledger pods=5 db=true outbox_backlog=4613 alerts=-
+05:14:28   sample: ready ledger pods=5 db=true outbox_backlog=8416 alerts=-
+05:14:46   sample: ready ledger pods=5 db=true outbox_backlog=11993 alerts=-
+05:15:04   sample: ready ledger pods=5 db=true outbox_backlog=15630 alerts=-
+05:15:21   sample: ready ledger pods=5 db=true outbox_backlog=19333 alerts=-
+05:15:40   sample: ready ledger pods=5 db=true outbox_backlog=23429 alerts=-
+05:15:57   sample: ready ledger pods=5 db=true outbox_backlog=27754 alerts=-
+05:16:15   sample: ready ledger pods=5 db=true outbox_backlog=31774 alerts=-
+05:16:32   sample: ready ledger pods=5 db=true outbox_backlog=36209 alerts=-
+05:16:51   sample: ready ledger pods=5 db=true outbox_backlog=40222 alerts=-
+05:17:08   sample: ready ledger pods=5 db=true outbox_backlog=44668 alerts=-
+05:17:26   sample: ready ledger pods=5 db=true outbox_backlog=48383 alerts=-
+05:17:43   sample: ready ledger pods=5 db=true outbox_backlog=51738 alerts=-
+05:18:02   sample: ready ledger pods=5 db=true outbox_backlog=55039 alerts=-
+05:18:19   sample: ready ledger pods=5 db=true outbox_backlog=58667 alerts=-
+05:18:37   sample: ready ledger pods=5 db=true outbox_backlog=62246 alerts=-
+05:18:53   sample: ready ledger pods=5 db=true outbox_backlog=65525 alerts=-
+05:19:12   sample: ready ledger pods=5 db=true outbox_backlog=68786 alerts=-
+05:19:28   sample: ready ledger pods=5 db=true outbox_backlog=71942 alerts=-
+05:19:46   sample: ready ledger pods=5 db=true outbox_backlog=75379 alerts=LedgerOutboxStuck
+05:19:54 broker down for ~350s; alerts firing: LedgerOutboxStuck
+05:19:54 RECOVER: operator scaled back to 1, it recreates the broker
+05:19:55 Kafka Ready again   [WRONG: stale status left from before the outage. The broker pod was really Ready at 05:25:24. run.sh now waits for the pod.]
+05:20:06   sample: ready ledger pods=5 db=true outbox_backlog=78623 alerts=LedgerOutboxStuck
+05:20:23   sample: ready ledger pods=5 db=true outbox_backlog=81205 alerts=LedgerOutboxStuck
+05:20:41   sample: ready ledger pods=5 db=true outbox_backlog=84310 alerts=LedgerOutboxStuck
+05:20:59   sample: ready ledger pods=5 db=true outbox_backlog=87013 alerts=LedgerOutboxStuck
+05:21:19   sample: ready ledger pods=5 db=true outbox_backlog=88469 alerts=LedgerOutboxStuck
+05:21:39   sample: ready ledger pods=5 db=true outbox_backlog=90483 alerts=LedgerOutboxStuck
+05:21:59   sample: ready ledger pods=5 db=true outbox_backlog=91583 alerts=LedgerOutboxStuck
+05:22:16   sample: ready ledger pods=5 db=true outbox_backlog=93350 alerts=LedgerOutboxStuck
+{"name": "kafka", "prefix": "drill-kafka-1792732393", "started": 1792732394.089431, "ended": 1792732934.2893324, "transfers": 99510, "final_status": {"201": 98219, "422": 1291}, "retried_transfers": 0, "attempt_errors": {}}
+05:22:16 client view (status per second, 0 = no HTTP answer):
+  t=  0-  9s  201:1276
+  t= 10- 19s  201:1613
+  t= 20- 29s  201:1561
+  t= 30- 39s  201:1204
+  t= 40- 49s  201:2153
+  t= 50- 59s  201:2505
+  t= 60- 69s  201:2141  422:22
+  t= 70- 79s  201:1849  422:9
+  t= 80- 89s  201:2222  422:3
+  t= 90- 99s  201:2135  422:8
+  t=100-109s  201:1771  422:1
+  t=110-119s  201:2067  422:20
+  t=120-129s  201:2211  422:10
+  t=130-139s  201:2178  422:42
+  t=140-149s  201:2589  422:32
+  t=150-159s  201:2422  422:24
+  t=160-169s  201:2302  422:23
+  t=170-179s  201:2107  422:18
+  t=180-189s  201:2469  422:23
+  t=190-199s  201:2689  422:44
+  t=200-209s  201:2003  422:34
+  t=210-219s  201:2449  422:39
+  t=220-229s  201:2721  422:79
+  t=230-239s  201:2413  422:61
+  t=240-249s  201:1765  422:16
+  t=250-259s  201:1881  422:53
+  t=260-269s  201:2056  422:63
+  t=270-279s  201:1615  422:46
+  t=280-289s  201:2030  422:47
+  t=290-299s  201:2034  422:75
+  t=300-309s  201:1914  422:17
+  t=310-319s  201:2054  422:31
+  t=320-329s  201:2264  422:53
+  t=330-339s  201:1790  422:80
+  t=340-349s  201:1489  422:18
+  t=350-359s  201:2122  422:30
+  t=360-369s  201:1883  422:31
+  t=370-379s  201:1736  422:11
+  t=380-389s  201:1971  422:8
+  t=390-399s  201:2130  422:11
+  t=400-409s  201:1589  422:9
+  t=410-419s  201:1294  422:29
+  t=420-429s  201:1552  422:40
+  t=430-439s  201:1833  422:30
+  t=440-449s  201:1656  422:39
+  t=450-459s  201:1598  422:17
+  t=460-469s  201:1107  422:1
+  t=470-479s  201:464  422:13
+  t=480-489s  201:1048  422:8
+  t=490-499s  201:1115  422:16
+  t=500-509s  201:541
+  t=510-519s  201:498  422:2
+  t=520-529s  201:858  422:5
+  t=530-539s  201:1270
+  t=540-549s  201:12
+05:56:31 verify (rerun after fixing a slow check in verify.py; same client data):
+Money
+  [PASS] all entries sum to zero: sum = 0
+  [PASS] every transaction is one debit + one credit: 0 unbalanced transactions
+  [PASS] no customer account below zero (no double spend): 0 negative accounts
+Exactly-once effect
+  [PASS] server stored one result per acknowledged transfer: 98219 stored, 98219 acknowledged
+  [PASS] one transaction per acknowledged transfer (no duplicates from retries): 98219 transactions, 98219 acknowledged
+  [PASS] no two keys produced the same transaction: 98219 distinct ids
+  [PASS] client got a final answer for every transfer: 0 without an answer
+  [PASS] replaying every acknowledged key returns the same transaction: 0 of 98219 differ
+Events (outbox -> Kafka -> statement view)
+  [PASS] outbox drained: 0 unpublished
+  [PASS] every transaction reached the statement view exactly once (2 lines): 0 incomplete
+
+real	3m42.812s
+06:00:14 drill kafka verify exit=0

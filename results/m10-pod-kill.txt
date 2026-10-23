@@ -1,0 +1,31 @@
+04:50:43 drill pod-kill: 5 ledger pods ready, image sha-9408cfa
+04:51:09 FAULT: SIGKILL the JVM in ledger-64bc75bbcd-2kfrj while transfers are in flight
+04:51:43 FAULT: SIGKILL the JVM in ledger-64bc75bbcd-ccdst
+{"name": "pod-kill", "prefix": "drill-pod-kill-1792731043", "started": 1792731044.7443326, "ended": 1792731134.8979673, "transfers": 9503, "final_status": {"201": 9503}, "retried_transfers": 11, "attempt_errors": {"502": 11}}
+04:52:17 restarts: ledger-64bc75bbcd-2kfrj=1 ledger-64bc75bbcd-6pfq6=0 ledger-64bc75bbcd-ccdst=1 ledger-64bc75bbcd-fjzfd=0 ledger-64bc75bbcd-zp5d8=0 
+04:52:17 client view (status per second, 0 = no HTTP answer):
+  t=  0-  9s  201:1175
+  t= 10- 19s  201:1459
+  t= 20- 29s  201:1574  502:6
+  t= 30- 39s  201:992
+  t= 40- 49s  201:602
+  t= 50- 59s  201:1239
+  t= 60- 69s  201:973  502:5
+  t= 70- 79s  201:909
+  t= 80- 89s  201:568
+  t= 90- 99s  201:12
+04:52:17 verify:
+Money
+  [PASS] all entries sum to zero: sum = 0
+  [PASS] every transaction is one debit + one credit: 0 unbalanced transactions
+  [PASS] no customer account below zero (no double spend): 0 negative accounts
+Exactly-once effect
+  [PASS] server stored one result per acknowledged transfer: 9503 stored, 9503 acknowledged
+  [PASS] one transaction per acknowledged transfer (no duplicates from retries): 9503 transactions, 9503 acknowledged
+  [PASS] no two keys produced the same transaction: 9503 distinct ids
+  [PASS] client got a final answer for every transfer: 0 without an answer
+  [PASS] replaying every acknowledged key returns the same transaction: 0 of 9503 differ
+Events (outbox -> Kafka -> statement view)
+  [PASS] outbox drained: 0 unpublished
+  [PASS] every transaction reached the statement view exactly once (2 lines): 0 incomplete
+04:58:06 drill pod-kill verify exit=0

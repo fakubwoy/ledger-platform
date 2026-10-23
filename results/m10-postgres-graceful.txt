@@ -1,0 +1,56 @@
+06:02:32 drill postgres: 5 ledger pods ready, image sha-9408cfa
+06:02:33   sample: ready ledger pods=5 db=true outbox_backlog=2 alerts=-
+06:02:38   sample: ready ledger pods=5 db=true outbox_backlog=11 alerts=-
+06:02:43   sample: ready ledger pods=5 db=true outbox_backlog=30 alerts=-
+06:02:50   sample: ready ledger pods=5 db=true outbox_backlog=33 alerts=-
+06:02:55   sample: ready ledger pods=5 db=true outbox_backlog=32 alerts=-
+06:03:00   sample: ready ledger pods=5 db=true outbox_backlog=33 alerts=-
+06:03:03 FAULT: deleting the Postgres pod ledger-db-1 (CloudNativePG recreates it on the same volume)
+06:03:05   sample: ready ledger pods=5 db=true outbox_backlog=16 alerts=-
+06:03:11   sample: ready ledger pods=5 db=true outbox_backlog=? alerts=-
+06:03:16   sample: ready ledger pods=5 db=true outbox_backlog=? alerts=-
+06:03:21   sample: ready ledger pods=5 db=true outbox_backlog=? alerts=-
+06:03:27   sample: ready ledger pods=5 db=true outbox_backlog=? alerts=-
+06:03:31   sample: ready ledger pods=5 db=true outbox_backlog=? alerts=-
+06:03:36   sample: ready ledger pods=5 db=true outbox_backlog=? alerts=-
+06:03:41   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:03:46   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:03:51   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:03:58   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:03   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:07   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:13   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:17   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:22   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:27   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+06:04:33   sample: ready ledger pods=5 db=false outbox_backlog=? alerts=-
+{"name": "postgres", "prefix": "drill-postgres-1792735352", "started": 1792735353.5461757, "ended": 1792735473.6209378, "transfers": 24615, "final_status": {"201": 24552, "422": 63}, "retried_transfers": 0, "attempt_errors": {}}
+06:04:34 client view (status per second, 0 = no HTTP answer):
+  t=  0-  9s  201:1500
+  t= 10- 19s  201:1802
+  t= 20- 29s  201:2364
+  t= 30- 39s  201:1698
+  t= 40- 49s  201:1781
+  t= 50- 59s  201:2120
+  t= 60- 69s  201:2111
+  t= 70- 79s  201:2567
+  t= 80- 89s  201:2105  422:6
+  t= 90- 99s  201:1948  422:24
+  t=100-109s  201:2551  422:13
+  t=110-119s  201:1993  422:20
+  t=120-129s  201:12
+06:08:32 verify (rerun once Postgres was back; the first attempt ran while it was still down):
+Money
+  [PASS] all entries sum to zero: sum = 0
+  [PASS] every transaction is one debit + one credit: 0 unbalanced transactions
+  [PASS] no customer account below zero (no double spend): 0 negative accounts
+Exactly-once effect
+  [PASS] server stored one result per acknowledged transfer: 24552 stored, 24552 acknowledged
+  [PASS] one transaction per acknowledged transfer (no duplicates from retries): 24552 transactions, 24552 acknowledged
+  [PASS] no two keys produced the same transaction: 24552 distinct ids
+  [PASS] client got a final answer for every transfer: 0 without an answer
+  [PASS] replaying every acknowledged key returns the same transaction: 0 of 24552 differ
+Events (outbox -> Kafka -> statement view)
+  [PASS] outbox drained: 0 unpublished
+  [PASS] every transaction reached the statement view exactly once (2 lines): 0 incomplete
+06:09:10 verify exit=0
