@@ -23,3 +23,6 @@ jobs:
           for env in dev prod; do
             helm template ledger charts/ledger -f charts/ledger/values-$env.yaml > /dev/null
           done
+      - name: trivy config (Kubernetes misconfigurations)
+        # Fails on HIGH/CRITICAL, e.g. a container that can run as root or write its root filesystem.
+        run: docker run --rm -v "$PWD/charts:/charts:ro" aquasec/trivy:0.69.1 config --severity HIGH,CRITICAL --exit-code 1 /charts/ledger

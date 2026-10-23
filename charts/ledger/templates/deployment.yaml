@@ -25,6 +25,14 @@ spec:
         checksum/config: {{ include (print $.Template.BasePath "/configmap.yaml") . | sha256sum }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.rollout.terminationGracePeriodSeconds }}
+      serviceAccountName: {{ .Release.Name }}
+      # The app never calls the Kubernetes API, so it gets no token at all.
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001    # the `app` user baked into the image
+        runAsGroup: 10001
+        seccompProfile: {type: RuntimeDefault}
       containers:
         - name: ledger
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
@@ -47,6 +55,13 @@ spec:
             - name: OTEL_RESOURCE_ATTRIBUTES
               value: "k8s.pod.name=$(POD_NAME)"
             {{- end }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          # The only writable path: Tomcat's work dir and JVM perf data live in java.io.tmpdir.
+          volumeMounts:
+            - {name: tmp, mountPath: /tmp}
           lifecycle:
             preStop:
               exec:
@@ -61,3 +76,6 @@ spec:
           readinessProbe:
             httpGet: {path: /actuator/health/readiness, port: 8080}
             {{- toYaml .Values.probes.readiness | nindent 12 }}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 256Mi}

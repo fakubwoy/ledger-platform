@@ -1,0 +1,37 @@
+{{- if .Values.postgres.enabled }}
+# Only the ledger may talk SQL to Postgres. Everything else in the cluster is denied by default once a
+# policy selects these Pods. kindnet enforces this (checked); some CNIs silently ignore NetworkPolicy.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Release.Name }}-db
+  labels: {{- include "ledger.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      cnpg.io/cluster: {{ .Release.Name }}-db
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ledger
+              app.kubernetes.io/instance: {{ .Release.Name }}
+      ports:
+        - {port: 5432, protocol: TCP}
+    # The CloudNativePG operator manages each instance through its status endpoint.
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: cnpg-system
+      ports:
+        - {port: 8000, protocol: TCP}
+    # Replicas stream WAL from the primary and instances check each other (prod runs 3 instances).
+    - from:
+        - podSelector:
+            matchLabels:
+              cnpg.io/cluster: {{ .Release.Name }}-db
+      ports:
+        - {port: 5432, protocol: TCP}
+        - {port: 8000, protocol: TCP}
+{{- end }}
