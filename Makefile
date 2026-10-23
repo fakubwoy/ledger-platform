@@ -2,7 +2,8 @@ CLUSTER = ledger
 
 # `make up` builds everything on a fresh laptop. The ledger itself is deployed by Argo CD from GitHub
 # (argocd/ledger.yaml); code changes ship through ledger-service CI, not from here.
-# LITE=1 skips Loki, Tempo and Alloy (logs and traces) to save about 1.5 GB of RAM.
+# LITE=1 skips Loki, Tempo and Alloy (logs and traces). It saves only about 0.4 GiB (measured); most memory
+# goes to the ledger replicas (about 620 MiB each), Prometheus and Kafka.
 .PHONY: up cluster platform operators observability argocd down
 up: cluster platform operators observability argocd
 
