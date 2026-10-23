@@ -5,3 +5,7 @@ image:
   # Written by ledger-service CI on every push to main; Argo CD rolls it out. Roll back with git revert.
   tag: "sha-d565d29"
   pullPolicy: IfNotPresent
+
+# Three replicas so the failure drills cover several pods sharing the outbox and losing one of them.
+autoscaling:
+  minReplicas: 3
