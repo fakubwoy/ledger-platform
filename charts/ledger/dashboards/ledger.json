@@ -155,7 +155,8 @@
       "showPoints": "never",
       "thresholdsStyle": {
        "mode": "line"
-      }
+      },
+      "axisSoftMax": 0.01
      },
      "thresholds": {
       "mode": "absolute",
@@ -169,7 +170,8 @@
         "value": 0.005
        }
       ]
-     }
+     },
+     "min": 0
     },
     "overrides": []
    },

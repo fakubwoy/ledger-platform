@@ -33,6 +33,21 @@ spec:
         runAsUser: 10001    # the `app` user baked into the image
         runAsGroup: 10001
         seccompProfile: {type: RuntimeDefault}
+      {{- if .Values.postgres.enabled }}
+      # Flyway runs at startup and the app exits if Postgres is not there yet, so wait for it instead of
+      # crash-looping on a fresh install.
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command: ["sh", "-c", "until nc -z -w 2 {{ .Release.Name }}-db-rw 5432; do echo waiting for postgres; sleep 2; done"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: [ALL]}
+          resources:
+            requests: {cpu: 10m, memory: 16Mi}
+            limits: {memory: 32Mi}
+      {{- end }}
       containers:
         - name: ledger
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

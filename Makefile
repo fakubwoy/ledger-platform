@@ -1,38 +1,21 @@
-IMAGE ?= ledger-service:dev
-SERVICE_DIR ?= ../ledger-service
 CLUSTER = ledger
 
-# kind nodes cannot pull from registries on this network, so every image is pulled on the host and side-loaded.
-IMAGES = ghcr.io/cloudnative-pg/cloudnative-pg:1.30.1 ghcr.io/cloudnative-pg/postgresql:17 \
-	quay.io/strimzi/operator:1.3.0 quay.io/strimzi/kafka:1.3.0-kafka-4.3.1 \
-	registry.k8s.io/ingress-nginx/controller:v1.12.1 registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.2 \
-	registry.k8s.io/metrics-server/metrics-server:v0.7.2
-OBS_IMAGES = docker.io/grafana/grafana:13.2.4-distroless quay.io/kiwigrid/k8s-sidecar:2.14.1 \
-	quay.io/prometheus-operator/prometheus-operator:v0.94.1 quay.io/prometheus-operator/prometheus-config-reloader:v0.94.1 \
-	quay.io/prometheus-operator/prometheus-config-reloader:v0.94.0 quay.io/prometheus/prometheus:v3.15.0-distroless \
-	quay.io/prometheus/node-exporter:v1.12.1-distroless registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0 \
-	docker.io/grafana/loki:3.6.11 docker.io/grafana/tempo:2.9.0 docker.io/grafana/alloy:v1.21.1
-
-.PHONY: up cluster load-images image platform operators observability deploy down
-up: cluster load-images image platform operators observability deploy
+# `make up` builds everything on a fresh laptop. The ledger itself is deployed by Argo CD from GitHub
+# (argocd/ledger.yaml); code changes ship through ledger-service CI, not from here.
+# LITE=1 skips Loki, Tempo and Alloy (logs and traces) to save about 1.5 GB of RAM.
+.PHONY: up cluster platform operators observability argocd down
+up: cluster platform operators observability argocd
 
 cluster:
 	kind create cluster --config kind/cluster.yaml
 	kind/helpers/fix-dns.sh $(CLUSTER)
 	kubectl -n kube-system rollout restart deploy/coredns
 
-load-images:
-	for i in $(IMAGES) $(OBS_IMAGES); do docker pull -q $$i && kind load docker-image $$i --name $(CLUSTER); done
-
-image:
-	cd $(SERVICE_DIR) && ./gradlew bootJar copyOtelAgent && docker build -t $(IMAGE) .
-	kind load docker-image $(IMAGE) --name $(CLUSTER)
-
 # ingress-nginx and metrics-server are vendored in platform/ so the versions are pinned.
 platform:
 	kubectl apply -f platform/ingress-nginx.yaml -f platform/metrics-server.yaml
-	kubectl -n ingress-nginx rollout status deploy/ingress-nginx-controller --timeout=180s
-	kubectl -n kube-system rollout status deploy/metrics-server --timeout=180s
+	kubectl -n ingress-nginx rollout status deploy/ingress-nginx-controller --timeout=300s
+	kubectl -n kube-system rollout status deploy/metrics-server --timeout=300s
 
 operators:
 	kubectl create namespace ledger --dry-run=client -o yaml | kubectl apply -f -
@@ -42,13 +25,22 @@ operators:
 
 observability:
 	helm upgrade --install kps platform/charts/kube-prometheus-stack-92.11.0.tgz -n monitoring --create-namespace \
-		-f platform/values/kube-prometheus-stack.yaml --wait --timeout 8m
+		-f platform/values/kube-prometheus-stack.yaml --wait --timeout 10m
+ifndef LITE
 	helm upgrade --install loki platform/charts/loki-7.3.0.tgz -n monitoring -f platform/values/loki.yaml --wait --timeout 5m
 	helm upgrade --install tempo platform/charts/tempo-1.24.4.tgz -n monitoring -f platform/values/tempo.yaml --wait --timeout 5m
 	helm upgrade --install alloy platform/charts/alloy-1.14.1.tgz -n monitoring -f platform/values/alloy.yaml --wait --timeout 5m
+endif
 
-deploy:
-	helm upgrade --install ledger charts/ledger -n ledger -f charts/ledger/values-dev.yaml
+argocd:
+	kubectl create namespace argocd --dry-run=client -o yaml | kubectl apply -f -
+	kubectl apply -n argocd --server-side --force-conflicts -f platform/argocd-install.yaml
+	kubectl apply --server-side --force-conflicts -f platform/argocd-config.yaml
+	kubectl -n argocd rollout restart deploy/argocd-server deploy/argocd-repo-server
+	kubectl -n argocd rollout status deploy/argocd-server --timeout=300s
+	kubectl apply -f argocd/ledger.yaml
+	@echo "Argo CD is syncing the ledger: kubectl -n argocd get application ledger -w"
 
 down:
 	kind delete cluster --name $(CLUSTER)
+	docker rm -f kind-dns
