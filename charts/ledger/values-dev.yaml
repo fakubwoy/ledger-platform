@@ -3,7 +3,7 @@
 image:
   repository: ghcr.io/fakubwoy/ledger-service
   # Written by ledger-service CI on every push to main; Argo CD rolls it out. Roll back with git revert.
-  tag: "sha-6b6ec48"
+  tag: "sha-7ad696b"
   pullPolicy: IfNotPresent
 
 # Three replicas so the failure drills cover several pods sharing the outbox and losing one of them.
