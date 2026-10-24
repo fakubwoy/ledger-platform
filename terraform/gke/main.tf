@@ -1,5 +1,5 @@
-# GKE + Cloud SQL + Secret Manager for the ledger. Validated with `terraform validate`; never applied from this
-# repo (it costs money). Kafka stays in-cluster via Strimzi; the image stays on GHCR.
+# GKE + Cloud SQL + Secret Manager for the ledger. Applied for real on 2026-10-23 (see docs/cloud.md), then destroyed.
+# Kafka stays in-cluster via Strimzi; the image stays on GHCR.
 terraform {
   required_version = ">= 1.6"
   required_providers {
